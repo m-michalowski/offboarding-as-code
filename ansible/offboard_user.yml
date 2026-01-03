@@ -1,0 +1,34 @@
+- name: Offboard user by email address
+  hosts: localhost
+  gather_facts: false
+  vars:
+    target_email: "{{ (email | default('', true)) | default(lookup('env','OFFBOARD_EMAIL') | default('', true), true) | trim | lower }}"
+  vars_files:
+    - group_vars/all.yml
+    - group_vars/secrets.yml
+
+  pre_tasks:
+    - name: Validate that email is provided
+      assert:
+        that:
+          - target_email | length > 3
+          - "'@' in target_email"
+        fail_msg: "Provide email via -e email=useremail@domain or env OFFBOARD_EMAIL"
+      tags: ["always"]
+
+    - name: Init result list
+      set_fact: 
+        offboarding_results: []
+
+  tasks:
+    - name: Offboard in RocketChat
+      include_tasks: tasks/rocketchat.yml
+      tags: ["rocketchat"]
+
+    - name: Offboard in Redmine
+      include_tasks: tasks/redmine.yml
+      tags: ["redmine"]
+
+    - name: List offboarding_results
+      debug:
+        msg: "{{ offboarding_results }}"

@@ -1,0 +1,7 @@
+# RocketChat
+rocketchat_url: "123"
+rocketchat_page_size: 100
+rocketchat_max_pages: 5
+
+# Redmine
+redmine_url: "123"

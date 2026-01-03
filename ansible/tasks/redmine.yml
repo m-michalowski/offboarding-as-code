@@ -1,0 +1,18 @@
+- name: Validate Redmine configuration
+  when: >
+    redmine_url | length == 0 
+    or redmine_api_key | length == 0
+  set_fact:
+    offboarding_results: "{{ offboarding_results + [ {
+      'system': 'Redmine',
+      'action': 'deactivate',
+      'status': 'failed',
+      'reason': 'Missing redmine_url or redmine_api_key'
+    } ] }}"
+    redmine_validation_failed: true
+    
+
+- name: Offboard user in Redmine
+  when: not (redmine_validation_failed | default(false))
+  debug:
+    msg: "TODO: disable Redmine user {{ target_email }}"
