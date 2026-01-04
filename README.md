@@ -7,12 +7,17 @@ Manual user offboarding in multiple systems was time consuming and prone to erro
 Centralized offboarding pipeline based on Ansible and GitLab CI.
 
 ## Structure
-- `ansible/playbooks/offboard_user.yml` orchestration playbook.
-- `ansible/roles/*` per-system roles with `tasks/main.yml` and `defaults/main.yml`.
-- `ansible/group_vars/all.yml` non-secret configuration overrides.
+- `ansible/offboard_user.yml` orchestration playbook.
+- `ansible/tasks/*` per-system tasks.
+- `ansible/group_vars/all.example.yml` example non-secret configuration (copy to `all.yml`).
 - `ansible/group_vars/secrets.example.yml` example secrets (copy to `secrets.yml` and use vault or CI vars).
 
 ## Usage
 ```bash
-ansible-playbook ansible/playbooks/offboard_user.yml -e email=user@example.com
+ansible-playbook ansible/offboard_user.yml -e email=user@example.com
 ```
+
+## Variables
+- Required: `email` or `OFFBOARD_EMAIL`.
+- RocketChat: `rocketchat_url`, `rocketchat_auth_token`, `rocketchat_auth_user_id`.
+- Redmine: `redmine_url`, `redmine_api_key`.
