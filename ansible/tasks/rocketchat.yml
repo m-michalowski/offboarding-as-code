@@ -1,18 +1,117 @@
 - name: Validate RocketChat variables
   when: >
-    rocketchat_url | length == 0
-    or rocketchat_auth_token | length == 0
-    or rocketchat_auth_user_id | length == 0
+    (rocketchat_url | default('') | length == 0)
+    or (rocketchat_auth_token | default('') | length == 0)
+    or (rocketchat_auth_user_id | default('') | length == 0)
   set_fact:
     offboarding_results: "{{ offboarding_results + [ {
       'system': 'RocketChat',
       'action': 'deactivate',
       'status': 'failed',
-      'reason': 'Missing RocketChat variable' 
+      'reason': 'Missing RocketChat variable'
     } ] }}"
     rocketchat_validation_failed: true
-    
-- name: Offboard user in Rocketchat
+
+- name: Reset search state
   when: not (rocketchat_validation_failed | default(false))
-  debug:
-    msg: "TODO: Disable Rocketchat user {{ target_email }}"
+  set_fact:
+    rc_found_user: {}
+    rc_total_users: 0
+    rc_offsets: []
+
+- name: RocketChat GET users.list (first page)
+  when: not (rocketchat_validation_failed | default(false))
+  uri:
+    url: "{{ rocketchat_url }}/api/v1/users.list?count={{ rocketchat_page_size }}&offset=0"
+    method: GET
+    headers:
+      X-Auth-Token: "{{ rocketchat_auth_token }}"
+      X-User-Id: "{{ rocketchat_auth_user_id }}"
+    return_content: true
+    status_code: 200
+  register: rc_users_first
+
+- name: Find user in first page
+  when: not (rocketchat_validation_failed | default(false))
+  set_fact:
+    rc_found_user: >-
+      {{
+        (rc_users_first.json.users | default([]))
+        | json_query("[?emails[?address=='" ~ target_email ~ "']]")
+        | first | default({})
+      }}
+    rc_total_users: "{{ rc_users_first.json.total | default(0) | int }}"
+
+- name: Build offsets for remaining pages
+  when:
+    - not (rocketchat_validation_failed | default(false))
+    - rc_total_users | int > (rocketchat_page_size | int)
+  set_fact:
+    rc_offsets: "{{ range(rocketchat_page_size | int, rc_total_users | int, rocketchat_page_size | int) | list }}"
+
+- name: RocketChat GET users.list (remaining pages)
+  when:
+    - not (rocketchat_validation_failed | default(false))
+    - (rc_found_user | default({}) | length == 0)
+    - rc_offsets | length > 0
+  uri:
+    url: "{{ rocketchat_url }}/api/v1/users.list?count={{ rocketchat_page_size }}&offset={{ item }}"
+    method: GET
+    headers:
+      X-Auth-Token: "{{ rocketchat_auth_token }}"
+      X-User-Id: "{{ rocketchat_auth_user_id }}"
+    return_content: true
+    status_code: 200
+  loop: "{{ rc_offsets }}"
+  register: rc_pages
+
+- name: Find user in remaining pages
+  when:
+    - not (rocketchat_validation_failed | default(false))
+    - (rc_found_user | default({}) | length == 0)
+    - rc_pages is defined
+  no_log: true
+  set_fact:
+    rc_found_user: >-
+      {{
+        (item.json.users | default([]))
+        | json_query("[?emails[?address=='" ~ target_email ~ "']]")
+        | first | default({})
+      }}
+  loop: "{{ rc_pages.results | default([]) }}"
+
+- name: RocketChat deactivate user
+  when:
+    - not (rocketchat_validation_failed | default(false))
+    - (rc_found_user | default({}) | length > 0)
+    - (rc_found_user.active | default(true)) | bool
+  uri:
+    url: "{{ rocketchat_url }}/api/v1/users.setActiveStatus"
+    method: POST
+    headers:
+      X-Auth-Token: "{{ rocketchat_auth_token }}"
+      X-User-Id: "{{ rocketchat_auth_user_id }}"
+    body_format: json
+    body:
+      userId: "{{ rc_found_user._id }}"
+      activeStatus: false
+      confirmRelinquish: true
+    return_content: true
+    status_code: 200
+  register: rc_deactivate_result
+
+- name: Record RocketChat deactivation result
+  when: not (rocketchat_validation_failed | default(false))
+  set_fact:
+    offboarding_results: "{{ offboarding_results + [ {
+      'system': 'RocketChat',
+      'action': 'deactivate',
+      'status': (
+        'skipped' if (rc_found_user | default({}) | length == 0)
+        else ('skipped' if not (rc_found_user.active | default(true)) else 'ok')
+      ),
+      'reason': (
+        'User not found' if (rc_found_user | default({}) | length == 0)
+        else ('User already deactivated' if not (rc_found_user.active | default(true)) else 'User deactivated')
+      )
+    } ] }}"
