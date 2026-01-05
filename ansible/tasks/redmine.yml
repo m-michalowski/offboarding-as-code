@@ -1,7 +1,7 @@
 - name: Validate Redmine configuration
   when: >
-    redmine_url | length == 0 
-    or redmine_api_key | length == 0
+    redmine_url | default('') | length == 0 
+    or redmine_api_key | default('') | length == 0
   set_fact:
     offboarding_results: "{{ offboarding_results + [ {
       'system': 'Redmine',
@@ -10,9 +10,39 @@
       'reason': 'Missing redmine_url or redmine_api_key'
     } ] }}"
     redmine_validation_failed: true
-    
 
-- name: Offboard user in Redmine
+- name: Find user (Redmine)
   when: not (redmine_validation_failed | default(false))
+  uri:
+    url: "{{ redmine_url }}/users.json?limit={{ redmine_page_size }}&offset={{ item }}&status=1&mail={{ target_email }}"
+    method: GET
+    headers:
+      X-Redmine-API-Key: "{{ redmine_api_key }}"
+    return_content: true
+    status_code: 200
+  loop: "{{ range(0, redmine_max_pages * redmine_page_size, redmine_page_size) | list }}"
+  register: rdmn_user
+
+- name: Pick user
+  when: not (redmine_validation_failed | default(false))
+  set_fact:
+    rdmn_found_user: >-
+      {{
+        (rdmn_user.results | map(attribute='json.users') | list | flatten
+        | selectattr('mail','equalto', target_email)
+        | first | default({}))
+      }}
+
+- name: Debug found id
+  when:
+    - not (redmine_validation_failed | default(false))
+    - (rdmn_found_user.id | default(0) | int) > 0
   debug:
-    msg: "TODO: disable Redmine user {{ target_email }}"
+    msg: "ID: {{ rdmn_found_user.id }}"
+
+- name: Debug no id found
+  when:
+    - not (redmine_validation_failed | default(false))
+    - (rdmn_found_user.id | default(0) | int) <= 0
+  debug:
+    msg: "ID not found"
