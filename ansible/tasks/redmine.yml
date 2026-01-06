@@ -1,4 +1,4 @@
-- name: Validate Redmine configuration
+- name: Validate configuration (Redmine)
   when: >
     redmine_url | default('') | length == 0 
     or redmine_api_key | default('') | length == 0
@@ -7,8 +7,7 @@
       'system': 'Redmine',
       'action': 'deactivate',
       'status': 'failed',
-      'reason': 'Missing redmine_url or redmine_api_key'
-    } ] }}"
+      'reason': 'Missing redmine_url or redmine_api_key'} ] }}"
     redmine_validation_failed: true
 
 - name: Find user (Redmine)
@@ -21,28 +20,47 @@
     return_content: true
     status_code: 200
   loop: "{{ range(0, redmine_max_pages * redmine_page_size, redmine_page_size) | list }}"
-  register: rdmn_user
+  register: rdmn_users
 
-- name: Pick user
+- name: Pick user (Redmine)
   when: not (redmine_validation_failed | default(false))
   set_fact:
-    rdmn_found_user: >-
+    rdmn_user: >-
       {{
-        (rdmn_user.results | map(attribute='json.users') | list | flatten
+        (rdmn_users.results | map(attribute='json.users') | list | flatten
         | selectattr('mail','equalto', target_email)
         | first | default({}))
       }}
 
-- name: Debug found id
-  when:
-    - not (redmine_validation_failed | default(false))
-    - (rdmn_found_user.id | default(0) | int) > 0
-  debug:
-    msg: "ID: {{ rdmn_found_user.id }}"
+- name: Set found flag (Redmine)
+  set_fact:
+    rdmn_user_found: "{{ (rdmn_user.id | default(0) | int) > 0 }}"
 
-- name: Debug no id found
+
+- name: Lock user (Redmine)
   when:
-    - not (redmine_validation_failed | default(false))
-    - (rdmn_found_user.id | default(0) | int) <= 0
-  debug:
-    msg: "ID not found"
+  - not (redmine_validation_failed | default(false))
+  - rdmn_user_found | default(false)
+  uri:
+    url: "{{ redmine_url }}/users/{{ rdmn_user.id }}.json"
+    method: PUT
+    headers:
+      X-Redmine-API-Key: "{{ redmine_api_key }}"
+    body_format: json
+    body:
+      user:
+        status: 3
+    status_code: 204
+
+- name: Record deactivation result (Redmine)
+  when: not( redmine_validation_failed | default(false))
+  set_fact:
+    offboarding_results: "{{ offboarding_results + [ {
+      'system': 'Redmine',
+      'action': 'Deactivate',
+      'status': (
+        'ok' if rdmn_user_found
+        else 'skipped'),
+      'reason': (
+        'User not found or already deactivated' if not rdmn_user
+        else ('User deactivated' if rdmn_user_found)) } ] }}"
