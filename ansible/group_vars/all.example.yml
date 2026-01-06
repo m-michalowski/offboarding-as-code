@@ -1,7 +1,8 @@
 # RocketChat
-rocketchat_url: "https://rocketchat.DOMAIN.com"
+rocketchat_url: "" # https://rocketchat.DOMAIN.com
 rocketchat_page_size: 100
-rocketchat_max_pages: 5
 
 # Redmine
-redmine_url: "https://redmine.DOMAIN.com"
+redmine_url: "" # https://redmine.DOMAIN.com
+redmine_page_size: 100
+redmine_max_pages: 2

@@ -19,5 +19,5 @@ ansible-playbook ansible/offboard_user.yml -e email=user@example.com
 
 ## Variables
 - Required: `email` or `OFFBOARD_EMAIL`.
-- RocketChat: `rocketchat_url`, `rocketchat_auth_token`, `rocketchat_auth_user_id`.
-- Redmine: `redmine_url`, `redmine_api_key`.
+- RocketChat: `rocketchat_url`, `rocketchat_auth_token`, `rocketchat_auth_user_id`, `rocketchat_page_size`.
+- Redmine: `redmine_url`, `redmine_api_key`, `redmine_page_size`, `redmine_max_pages`.
