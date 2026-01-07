@@ -29,6 +29,16 @@
       include_tasks: tasks/redmine.yml
       tags: ["redmine"]
 
+    - name: Build offboarding summary
+      set_fact:
+        offboarding_summary: "{{ offboarding_summary | default({}) | combine({
+          item.system: {
+            'action': item.action,
+            'status': item.status,
+            'reason': item.reason
+          }}) }}"
+      loop: "{{ offboarding_results }}"
+
     - name: List offboarding_results
       debug:
-        msg: "{{ offboarding_results }}"
+        msg: "{{ offboarding_summary }}"

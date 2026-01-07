@@ -5,8 +5,8 @@
   set_fact:
     offboarding_results: "{{ offboarding_results + [ {
       'system': 'Redmine',
-      'action': 'deactivate',
-      'status': 'failed',
+      'action': 'Deactivate',
+      'status': 'Failed',
       'reason': 'Missing redmine_url or redmine_api_key'} ] }}"
     redmine_validation_failed: true
 
@@ -59,8 +59,8 @@
       'system': 'Redmine',
       'action': 'Deactivate',
       'status': (
-        'ok' if rdmn_user_found
-        else 'skipped'),
+        'OK' if rdmn_user_found
+        else 'Skipped'),
       'reason': (
         'User not found or already deactivated' if not rdmn_user
         else ('User deactivated' if rdmn_user_found)) } ] }}"

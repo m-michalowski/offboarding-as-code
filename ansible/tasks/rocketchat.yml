@@ -6,10 +6,9 @@
   set_fact:
     offboarding_results: "{{ offboarding_results + [ {
       'system': 'RocketChat',
-      'action': 'deactivate',
-      'status': 'failed',
-      'reason': 'Missing RocketChat variable'
-    } ] }}"
+      'action': 'Deactivate',
+      'status': 'Failed',
+      'reason': 'Missing RocketChat variable'} ] }}"
     rocketchat_validation_failed: true
 
 - name: Reset search state
@@ -19,7 +18,7 @@
     rc_total_users: 0
     rc_offsets: []
 
-- name: RocketChat GET users.list (first page)
+- name: GET users.list (Rocketchat first page)
   when: not (rocketchat_validation_failed | default(false))
   uri:
     url: "{{ rocketchat_url }}/api/v1/users.list?count={{ rocketchat_page_size }}&offset=0"
@@ -31,7 +30,7 @@
     status_code: 200
   register: rc_users_first
 
-- name: Find user in first page
+- name: Find user in first page (Rocketchat)
   when: not (rocketchat_validation_failed | default(false))
   set_fact:
     rc_found_user: >-
@@ -49,7 +48,7 @@
   set_fact:
     rc_offsets: "{{ range(rocketchat_page_size | int, rc_total_users | int, rocketchat_page_size | int) | list }}"
 
-- name: RocketChat GET users.list (remaining pages)
+- name: GET users.list (Rocketchat remaining pages)
   when:
     - not (rocketchat_validation_failed | default(false))
     - (rc_found_user | default({}) | length == 0)
@@ -65,7 +64,7 @@
   loop: "{{ rc_offsets }}"
   register: rc_pages
 
-- name: Find user in remaining pages
+- name: Find user in remaining pages (Rocketchat)
   when:
     - not (rocketchat_validation_failed | default(false))
     - (rc_found_user | default({}) | length == 0)
@@ -80,7 +79,7 @@
       }}
   loop: "{{ rc_pages.results | default([]) }}"
 
-- name: RocketChat deactivate user
+- name: Deactivate user (Rocketchat)
   when:
     - not (rocketchat_validation_failed | default(false))
     - (rc_found_user | default({}) | length > 0)
@@ -100,18 +99,19 @@
     status_code: 200
   register: rc_deactivate_result
 
-- name: Record RocketChat deactivation result
+- name: Record deactivation result (Rocketchat)
   when: not (rocketchat_validation_failed | default(false))
   set_fact:
     offboarding_results: "{{ offboarding_results + [ {
       'system': 'RocketChat',
-      'action': 'deactivate',
+      'action': 'Deactivate',
       'status': (
-        'skipped' if (rc_found_user | default({}) | length == 0)
-        else ('skipped' if not (rc_found_user.active | default(true)) else 'ok')
+        'Skipped' if (rc_found_user | default({}) | length == 0)
+        else ('Skipped' if not (rc_found_user.active | default(true))
+        else 'OK')
       ),
       'reason': (
         'User not found' if (rc_found_user | default({}) | length == 0)
-        else ('User already deactivated' if not (rc_found_user.active | default(true)) else 'User deactivated')
-      )
-    } ] }}"
+        else ('User already deactivated' if not (rc_found_user.active | default(true))
+        else 'User Deactivated')
+      )} ] }}"
