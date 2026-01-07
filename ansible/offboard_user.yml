@@ -28,6 +28,10 @@
     - name: Offboard in Redmine
       include_tasks: tasks/redmine.yml
       tags: ["redmine"]
+    
+    - name: Offboarding Gitlab
+      include_tasks: tasks/gitlab.yml
+      tags: ["gitlab"]
 
     - name: Build offboarding summary
       set_fact:
@@ -41,4 +45,4 @@
 
     - name: List offboarding_results
       debug:
-        msg: "{{ offboarding_summary }}"
+        msg: "{{ offboarding_summary | default([])}}"
