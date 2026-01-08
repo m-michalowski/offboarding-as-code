@@ -6,3 +6,6 @@ rocketchat_page_size: 100
 redmine_url: "" # https://redmine.DOMAIN.com
 redmine_page_size: 100
 redmine_max_pages: 2
+
+# Gitlab
+gitlab_url: "" # https://gitlab.DOMAIN.com

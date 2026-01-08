@@ -37,9 +37,29 @@
   when:
     - not (gitlab_validation_failed | default(false))
     - (gitlab_users.json | default([]) | length) > 0
+    - gitlab_user.state == "active"
   uri:
     url: "{{ gitlab_url }}/api/v4/users/{{ gitlab_user.id }}/block"
     method: POST
     headers:
       PRIVATE-TOKEN: "{{ gitlab_api_key }}"
     status_code: 201
+
+# --- REPORTING ---
+
+- name: Record GitLab result
+  when: not (gitlab_validation_failed | default(false))
+  set_fact:
+    offboarding_results: "{{ offboarding_results + [ {
+      'system': 'Gitlab',
+      'action': 'Deactivate',
+      'status': (
+        'Skipped' if (gitlab_users.json | default([]) | length) == 0
+        else ('Skipped' if gitlab_user.state == 'blocked' 
+        else 'OK' )
+      ),
+      'reason': (
+        'Not found' if (gitlab_users.json | default([]) | length) == 0
+        else ('User already blocked' if gitlab_user.state == 'blocked' 
+        else 'User deactivated' )
+      )} ] }}"
