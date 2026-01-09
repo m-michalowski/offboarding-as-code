@@ -1,0 +1,17 @@
+stages:
+  - offboard
+
+offboard_user:
+  stage: offboard
+  image: python:3.12-slim
+  when: manual
+  allow_failure: false
+  before_script:
+    - pip install --no-cache-dir ansible==9.* requests
+    - cd ansible
+    - printf "%s" "$ANSIBLE_VAULT_PASSWORD" > .vault_pass
+    - chmod 600 .vault_pass
+  script:
+    - ansible-playbook -i localhost offboard_user.yml -e "email=${OFFBOARD_EMAIL}" --vault-password-file .vault_pass
+  after_script:
+    - rm -f .vault_pass || true
