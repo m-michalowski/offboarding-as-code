@@ -19,22 +19,23 @@
     - name: Init result list
       set_fact: 
         offboarding_results: []
+      tags: ["always"]
 
   tasks:
     - name: Offboard in RocketChat
-      include_tasks: tasks/rocketchat.yml
+      import_tasks: tasks/rocketchat.yml
       tags: ["rocketchat"]
 
     - name: Offboard in Redmine
-      include_tasks: tasks/redmine.yml
+      import_tasks: tasks/redmine.yml
       tags: ["redmine"]
     
     - name: Offboarding Gitlab
-      include_tasks: tasks/gitlab.yml
+      import_tasks: tasks/gitlab.yml
       tags: ["gitlab"]
 
     - name: Offboarding Atlassian
-      include_tasks: tasks/atlassian.yml
+      import_tasks: tasks/atlassian.yml
       tags: ["atlassian"]
 
     - name: Build offboarding summary
@@ -46,7 +47,9 @@
             'reason': item.reason
           }}) }}"
       loop: "{{ offboarding_results }}"
+      tags: ["always"]
 
     - name: List offboarding_results
       debug:
         msg: "{{ offboarding_summary | default([])}}"
+      tags: ["always"]
