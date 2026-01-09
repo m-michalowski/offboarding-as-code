@@ -1,0 +1,68 @@
+- name: Validate configuration (Atlassian)
+  when: >
+    atlassian_url | default('') | length == 0 
+    or atlassian_org_id | default('') | length == 0
+    or atlassian_api_key | default('') | length == 0
+  set_fact:
+    offboarding_results: "{{ offboarding_results + [ {
+      'system': 'Atlassian',
+      'action': 'Deactivate',
+      'status': 'Failed',
+      'reason': 'Missing atlassian_url, atlassian_api_key or atlassian_org_id'} ] }}"
+    atlassian_validation_failed: true
+
+
+- name: Find user (Atlassian)
+  when: not (atlassian_validation_failed | default(false))
+  uri:
+    url: "{{ atlassian_url }}/{{ atlassian_org_id }}/directories/{{ atlassian_dir_id }}/users?searchTerm={{ target_email }}"
+    method: GET
+    headers:
+      Authorization: "Bearer {{ atlassian_api_key }}"
+      Accept: "application/json"
+    return_content: true
+    status_code: 200
+  register: atlassian_users
+
+- name: Pick user (Atlassian)
+  when: 
+    - not (atlassian_validation_failed | default(false))
+    - (atlassian_users.json | default([]) | length) > 0
+  set_fact:
+    atlassian_user: >-
+      {{
+        (atlassian_users.json.data | default([]))
+        | first | default({})
+      }}
+
+- name: Block user (Atlassian)
+  when:
+    - not (atlassian_validation_failed | default(false))
+    - (atlassian_user | default([]) | length) > 0
+    - (atlassian_user.membershipStatus | default("suspended")) == "active"
+  uri:
+    url: "{{ atlassian_url }}/{{ atlassian_org_id }}/directories/{{ atlassian_dir_id }}/users/{{ atlassian_user.accountId }}/suspend"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ atlassian_api_key }}"
+      Accept: "application/json"
+    status_code: 204
+
+# --- REPORTING ---
+
+- name: Record Atlassian result
+  when: not (atlassian_validation_failed | default(false))
+  set_fact:
+    offboarding_results: "{{ offboarding_results + [ {
+      'system': 'Atlassian',
+      'action': 'Suspend',
+      'status': (
+        'Skipped' if (atlassian_user | default([]) | length) == 0
+        else ('Skipped' if atlassian_user.membershipStatus == 'suspended' 
+        else 'OK' )
+      ),
+      'reason': (
+        'Not found' if (atlassian_user | default([]) | length) == 0
+        else ('User already suspended' if atlassian_user.membershipStatus == 'suspended' 
+        else 'User deactivated' )
+      )} ] }}"

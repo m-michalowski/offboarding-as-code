@@ -33,6 +33,10 @@
       include_tasks: tasks/gitlab.yml
       tags: ["gitlab"]
 
+    - name: Offboarding Atlassian
+      include_tasks: tasks/atlassian.yml
+      tags: ["atlassian"]
+
     - name: Build offboarding summary
       set_fact:
         offboarding_summary: "{{ offboarding_summary | default({}) | combine({

@@ -9,3 +9,6 @@ redmine_max_pages: 2
 
 # Gitlab
 gitlab_url: "" # https://gitlab.DOMAIN.com
+
+# Atlassian
+atlassian_url: "" # for cloud based Atlassian ->  https://api.atlassian.com/admin/v2/orgs
