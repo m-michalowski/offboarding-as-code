@@ -38,6 +38,10 @@
       import_tasks: tasks/atlassian.yml
       tags: ["atlassian"]
 
+    - name: Revoke Jetbrains licences
+      import_tasks: tasks/jetbrains.yml
+      tags: ["jetbrains"]
+   
     - name: Build offboarding summary
       set_fact:
         offboarding_summary: "{{ offboarding_summary | default({}) | combine({

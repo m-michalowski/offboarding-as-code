@@ -5,10 +5,14 @@ rocketchat_page_size: 100
 # Redmine
 redmine_url: "" # https://redmine.DOMAIN.com
 redmine_page_size: 100
-redmine_max_pages: 2
+redmine_max_pages: 2 # based on expected number of users
 
 # Gitlab
 gitlab_url: "" # https://gitlab.DOMAIN.com
 
 # Atlassian
 atlassian_url: "" # for cloud based Atlassian ->  https://api.atlassian.com/admin/v2/orgs
+
+# JetBrains
+jetbrains_url: "" # https://account.jetbrains.com
+jetbrains_customer_id: ""

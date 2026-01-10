@@ -18,10 +18,15 @@ Centralized offboarding pipeline based on Ansible, with an optional GitLab CI jo
 - Redmine
 - GitLab
 - Atlassian (organization level)
+- JetBrains
+
+## Additional task files (not enabled by default)
+- Moodle
+- Bitwarden
 
 ## Usage (local)
 ```bash
-ansible-playbook -i localhost ansible/offboard_user.yml -e email=user@example.com
+ansible-playbook -i "localhost," ansible/offboard_user.yml -e email=user@example.com
 ```
 
 ## Usage (GitLab CI)
@@ -35,8 +40,9 @@ ansible-playbook -i localhost ansible/offboard_user.yml -e email=user@example.co
 ## Run only selected systems
 - Use tags, for example:
 ```bash
-ansible-playbook -i localhost ansible/offboard_user.yml -e email=user@example.com --tags gitlab
+ansible-playbook -i "localhost," ansible/offboard_user.yml -e email=user@example.com --tags gitlab
 ```
+- Note: tag filtering works when tasks are imported (`import_tasks`) or includes use `apply: tags`. Plain `include_tasks` will include the file but skip inner tasks.
 
 ## Variables
 - Required: `email` or `OFFBOARD_EMAIL`.
@@ -44,3 +50,4 @@ ansible-playbook -i localhost ansible/offboard_user.yml -e email=user@example.co
 - Redmine: `redmine_url`, `redmine_api_key`, `redmine_page_size`, `redmine_max_pages`.
 - GitLab: `gitlab_url`, `gitlab_api_key`.
 - Atlassian: `atlassian_url`, `atlassian_org_id`, `atlassian_dir_id`, `atlassian_api_key`.
+- JetBrains: `jetbrains_url`, `jetbrains_customer_id`, `jetbrains_api_key`
