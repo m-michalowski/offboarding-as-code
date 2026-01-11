@@ -18,11 +18,7 @@ Centralized offboarding pipeline based on Ansible, with an optional GitLab CI jo
 - Redmine
 - GitLab
 - Atlassian (organization level)
-- JetBrains
-
-## Additional task files (not enabled by default)
-- Moodle
-- Bitwarden
+- JetBrains (revoke licences)
 
 ## Usage (local)
 ```bash
