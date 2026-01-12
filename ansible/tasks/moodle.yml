@@ -1,0 +1,70 @@
+- name: Validate configuration (Moodle)
+  when: >
+    moodle_url | default('') | length == 0 
+    or moodle_api_key | default('') | length == 0
+  set_fact:
+    offboarding_results: "{{ offboarding_results + [ {
+      'system': 'Moodle',
+      'action': 'Deactivate',
+      'status': 'Failed',
+      'reason': 'Missing moodle_url or moodle_api_key'} ] }}"
+    moodle_validation_failed: true
+
+- name: Find user by email (Moodle)
+  when: not (moodle_validation_failed | default (false))
+  uri:
+    url: "{{ moodle_url }}/webservice/rest/server.php"
+    method: POST
+    body_format: form-urlencoded
+    body:
+      wstoken: "{{ moodle_api_key }}"
+      wsfunction: core_user_get_users_by_field
+      moodlewsrestformat: json
+      field: email
+      "values[0]": "{{ target_email }}"
+    return_content: true
+    status_code: 200
+  register: moodle_users
+
+- name: Set moodle_user (first match)
+  when: not (moodle_validation_vailed | default (false))
+  set_fact:
+    moodle_user: "{{ (moodle_users.json | default([]) | first) | default({}, true) }}"
+
+- name: Suspend User (Moodle)
+  when: 
+    - not (moodle_validation_failed | default(false))
+    - not (moodle_user.suspended | default(false))
+    - moodle_user != {}
+  uri: 
+    url: "{{ moodle_url }}/webservice/rest/server.php"
+    method: POST
+    body_format: form-urlencoded
+    body:
+      wstoken: "{{ moodle_api_key }}"
+      wsfunction: core_user_update_users
+      moodlewsrestformat: json
+      "users[0][id]": "{{ moodle_user.id }}"
+      "users[0][suspended]": "1"
+    return_content: true
+    status_code: 200
+  register: moodle_suspend
+
+# --- REPORTING ---
+
+- name: Record Moodle result
+  when: not (moodle_validation_failed | default (false))
+  set_fact:
+    offboarding_results: "{{ offboarding_results + [ {
+      'system': 'Moodle',
+      'action': 'Deactivate',
+      'status': (
+        'Skipped' if moodle_user == {}
+        else ('Skipped' if (moodle_user.suspended | default(false)) else 'OK')
+      ),
+      'reason': (
+        'Not found' if moodle_user == {}
+        else ('User already suspended' if (moodle_user.suspended | default(false))
+        else 'User suspended')
+      )} ] }}"
+

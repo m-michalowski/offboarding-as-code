@@ -19,7 +19,7 @@ Centralized offboarding pipeline based on Ansible, with an optional GitLab CI jo
 - GitLab
 - Atlassian (organization level)
 - JetBrains (revoke licences)
-
+- Moodle 
 ## Usage (local)
 ```bash
 ansible-playbook -i "localhost," ansible/offboard_user.yml -e email=user@example.com
@@ -39,11 +39,3 @@ ansible-playbook -i "localhost," ansible/offboard_user.yml -e email=user@example
 ansible-playbook -i "localhost," ansible/offboard_user.yml -e email=user@example.com --tags gitlab
 ```
 - Note: tag filtering works when tasks are imported (`import_tasks`) or includes use `apply: tags`. Plain `include_tasks` will include the file but skip inner tasks.
-
-## Variables
-- Required: `email` or `OFFBOARD_EMAIL`.
-- RocketChat: `rocketchat_url`, `rocketchat_auth_token`, `rocketchat_auth_user_id`, `rocketchat_page_size`.
-- Redmine: `redmine_url`, `redmine_api_key`, `redmine_page_size`, `redmine_max_pages`.
-- GitLab: `gitlab_url`, `gitlab_api_key`.
-- Atlassian: `atlassian_url`, `atlassian_org_id`, `atlassian_dir_id`, `atlassian_api_key`.
-- JetBrains: `jetbrains_url`, `jetbrains_customer_id`, `jetbrains_api_key`

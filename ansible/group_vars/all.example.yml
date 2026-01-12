@@ -16,3 +16,6 @@ atlassian_url: "" # for cloud based Atlassian ->  https://api.atlassian.com/admi
 # JetBrains
 jetbrains_url: "" # https://account.jetbrains.com
 jetbrains_customer_id: ""
+
+# Moodle
+moodle_url: "https://moodle.DOMAIN.com"
