@@ -5,9 +5,7 @@
   set_fact:
     offboarding_results: "{{ offboarding_results + [ {
       'system': 'Gitlab',
-      'action': 'Deactivate',
-      'status': 'Failed',
-      'reason': 'Missing gitlab_url or gitlab_api_key'} ] }}"
+      'status': 'Missing gitlab_url or gitlab_api_key'} ] }}"
     gitlab_validation_failed: true
 
 - name: Search user (Gitlab)
@@ -52,14 +50,8 @@
   set_fact:
     offboarding_results: "{{ offboarding_results + [ {
       'system': 'Gitlab',
-      'action': 'Deactivate',
       'status': (
-        'Skipped' if (gitlab_users.json | default([]) | length) == 0
-        else ('Skipped' if gitlab_user.state == 'blocked' 
-        else 'OK' )
-      ),
-      'reason': (
-        'Not found' if (gitlab_users.json | default([]) | length) == 0
+        'User not found' if (gitlab_users.json | default([]) | length) == 0
         else ('User already blocked' if gitlab_user.state == 'blocked' 
         else 'User deactivated' )
       )} ] }}"

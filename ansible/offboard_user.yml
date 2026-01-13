@@ -50,9 +50,7 @@
       set_fact:
         offboarding_summary: "{{ offboarding_summary | default({}) | combine({
           item.system: {
-            'action': item.action,
-            'status': item.status,
-            'reason': item.reason
+            'status': item.status
           }}) }}"
       loop: "{{ offboarding_results }}"
       tags: ["always"]

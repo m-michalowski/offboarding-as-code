@@ -5,9 +5,7 @@
   set_fact:
     offboarding_results: "{{ offboarding_results + [ {
       'system': 'Moodle',
-      'action': 'Deactivate',
-      'status': 'Failed',
-      'reason': 'Missing moodle_url or moodle_api_key'} ] }}"
+      'status': 'Missing moodle_url or moodle_api_key'} ] }}"
     moodle_validation_failed: true
 
 - name: Find user by email (Moodle)
@@ -57,14 +55,9 @@
   set_fact:
     offboarding_results: "{{ offboarding_results + [ {
       'system': 'Moodle',
-      'action': 'Deactivate',
       'status': (
-        'Skipped' if moodle_user == {}
-        else ('Skipped' if (moodle_user.suspended | default(false)) else 'OK')
-      ),
-      'reason': (
-        'Not found' if moodle_user == {}
+        'User not found' if moodle_user == {}
         else ('User already suspended' if (moodle_user.suspended | default(false))
-        else 'User suspended')
+        else 'OK - User suspended')
       )} ] }}"
 

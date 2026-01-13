@@ -6,9 +6,7 @@
   set_fact:
     offboarding_results: "{{ offboarding_results + [ {
       'system': 'RocketChat',
-      'action': 'Deactivate',
-      'status': 'Failed',
-      'reason': 'Missing RocketChat variable'} ] }}"
+      'status': 'Missing RocketChat variable'} ] }}"
     rocketchat_validation_failed: true
 
 - name: Reset search state
@@ -104,13 +102,7 @@
   set_fact:
     offboarding_results: "{{ offboarding_results + [ {
       'system': 'RocketChat',
-      'action': 'Deactivate',
       'status': (
-        'Skipped' if (rc_found_user | default({}) | length == 0)
-        else ('Skipped' if not (rc_found_user.active | default(true))
-        else 'OK')
-      ),
-      'reason': (
         'User not found' if (rc_found_user | default({}) | length == 0)
         else ('User already deactivated' if not (rc_found_user.active | default(true))
         else 'User Deactivated')
